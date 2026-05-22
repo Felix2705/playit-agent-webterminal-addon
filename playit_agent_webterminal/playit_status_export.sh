@@ -1,10 +1,7 @@
 #!/bin/sh
 set -eu
 
-# Periodically reads:
-#   /addon # playit service status
-# and publishes the parsed values as HA states using:
-#   http://supervisor/core/api/states/<entity_id>
+# Export status to Home Assistant via Supervisor Core API
 #
 # Entities:
 # - sensor.playit_agent_phase
@@ -21,11 +18,12 @@ if [ -z "$HA_TOKEN" ]; then
 fi
 
 json_escape() {
+  # string -> JSON-escaped string (minimal)
   echo "$1" | sed 's/\\/\\\\/g; s/"/\\"/g; s/\r//g; s/\n/\\n/g'
 }
 
 post_state() {
-  # $1=entity_id $2=state $3=attributes_json_object
+  # $1 entity_id, $2 state, $3 attributes_json_object (e.g. {})
   entity_id="$1"
   state="$2"
   attrs="$3"
@@ -50,12 +48,9 @@ normalize_bool() {
   esac
 }
 
-extract_value_after_colon() {
-  # $1=multi-line input $2=label like "Phase"
-  # prints first match after "Label:"
-  s="$1"
-  label="$2"
-  echo "$s" | sed -n "s/^[[:space:]]*$label:[[:space:]]*//p" | head -n 1
+extract_after_colon() {
+  # $1 multi-line input, $2 label (e.g. Phase)
+  echo "$1" | sed -n "s/^[[:space:]]*$2:[[:space:]]*//p" | head -n 1
 }
 
 PLAYIT_BIN="/usr/local/bin/playit"
@@ -70,10 +65,10 @@ while :; do
   status_out="$("$PLAYIT_BIN" service status 2>/dev/null || true)"
 
   if [ -n "$status_out" ]; then
-    phase="$(extract_value_after_colon "$status_out" "Phase")"
-    version="$(extract_value_after_colon "$status_out" "Version")"
-    uptime_raw="$(extract_value_after_colon "$status_out" "Uptime")"
-    secret_raw="$(extract_value_after_colon "$status_out" "Secret configured")"
+    phase="$(extract_after_colon "$status_out" "Phase")"
+    version="$(extract_after_colon "$status_out" "Version")"
+    uptime_raw="$(extract_after_colon "$status_out" "Uptime")"
+    secret_raw="$(extract_after_colon "$status_out" "Secret configured")"
 
     uptime_seconds="$(echo "$uptime_raw" | sed 's/^\([0-9][0-9]*\).*/\1/p')"
     if [ -z "$uptime_seconds" ]; then uptime_seconds="0"; fi
