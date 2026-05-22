@@ -1,0 +1,21 @@
+﻿name: "Playit Agent WebTerminal"
+description: "Runs the Playit Agent and exposes a web terminal (ttyd) via Home Assistant ingress."
+version: "0.0.14-Beta"
+slug: "playit_agent_webterminal"
+startup: "services"
+boot: "auto"
+host_network: false
+homeassistant_api: true
+hassio_api: true
+ingress: true
+ingress_port: 7681
+ingress_stream: true
+panel_icon: mdi:terminal
+panel_title: Playit WebTerminal
+icon: icon.svg
+ports:
+  7681/tcp: 7681
+arch:
+  - amd64
+map:
+  - config:rw
