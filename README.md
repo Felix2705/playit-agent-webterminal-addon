@@ -35,25 +35,25 @@ playit --help
 
 ### Status prüfen (für Debugging)
 ```sh
-playit service status
+playit status
 ```
 
 ## Playit Status Monitoring (Entities in Home Assistant)
 
-Dieses Add-on exportiert den Output von `playit service status` als Home-Assistant Entities.
+Dieses Add-on exportiert den Output von `playit status` als Home-Assistant Entities.
 
 Die folgenden Entities werden angelegt/aktualisiert:
 
-- `sensor.playit_agent_phase`  
+- `sensor.playit_agent_phase`
   (z.B. `running`)
 
-- `sensor.playit_agent_uptime_seconds`  
+- `sensor.playit_agent_uptime_seconds`
   (Uptime in Sekunden)
 
-- `sensor.playit_agent_version`  
+- `sensor.playit_agent_version`
   (Playit Agent Version)
 
-- `sensor.playit_agent_secret_configured`  
+- `sensor.playit_agent_secret_configured`
   (z.B. `true`/`false`)
 
 ### Wo finde ich die Entities?
@@ -65,7 +65,7 @@ Die folgenden Entities werden angelegt/aktualisiert:
 - Add-on neu starten und **30–60 Sekunden warten** (der Exporter aktualisiert im Intervall).
 - Wenn du debuggen willst, prüfe im Web-Terminal mit:
   ```sh
-  playit service status
+  playit status
   ```
 
 ## Hinweis
