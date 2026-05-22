@@ -37,7 +37,7 @@ fi
 download_if_missing "$TTYD_URL" "$TTyD_BIN"
 chmod_exec_if_file "$TTyD_BIN"
 
-download_if_missing "$PLAYIT_URL" "$PLAYIT_DAEMON_BIN"
+download_if_missing "$PLAYIT_DAEMON_URL" "$PLAYIT_DAEMON_BIN"
 chmod_exec_if_file "$PLAYIT_DAEMON_BIN"
 
 download_if_missing "$PLAYIT_CLI_URL" "$PLAYIT_CLI_BIN"
@@ -46,9 +46,13 @@ chmod_exec_if_file "$PLAYIT_CLI_BIN"
 # Make `playit` available in the ttyd shell
 ln -sf "$PLAYIT_CLI_BIN" /usr/local/bin/playit || true
 
+# Persist secrets/config across addon restarts (HA maps config:rw to /config)
+export XDG_CONFIG_HOME="/config"
+
 # Start playit agent detached so it survives ttyd shell exit
 nohup /addon/start_playit.sh >/var/log/playit-agent.log 2>&1 &
+
 sleep 1
 
-# Launch interactive shell in ttyd
-exec "$TTyD_BIN" -p "$TTY_PORT" -W -- /bin/sh -lc "trap '' HUP; exec /bin/sh"
+# Launch interactive shell in ttyd; ensure it also uses /config
+exec "$TTyD_BIN" -p "$TTY_PORT" -W -- /bin/sh -lc "export XDG_CONFIG_HOME=/config; trap '' HUP; exec /bin/sh"
