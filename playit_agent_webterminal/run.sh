@@ -5,7 +5,7 @@ TTyD_BIN="/usr/local/bin/ttyd"
 TTY_PORT="7681"
 
 PLAYIT_DAEMON_BIN="/addon/playit-agent"
-PLAYIT_URL="https://github.com/playit-cloud/playit-agent/releases/download/v1.0.4/playit-linux-amd64"
+PLAYIT_DAEMON_URL="https://github.com/playit-cloud/playit-agent/releases/download/v1.0.4/playit-linux-amd64"
 
 PLAYIT_CLI_BIN="/addon/playit-cli"
 PLAYIT_CLI_URL="https://github.com/playit-cloud/playit-agent/releases/download/v1.0.4/playit-cli-linux-amd64"
@@ -43,16 +43,16 @@ chmod_exec_if_file "$PLAYIT_DAEMON_BIN"
 download_if_missing "$PLAYIT_CLI_URL" "$PLAYIT_CLI_BIN"
 chmod_exec_if_file "$PLAYIT_CLI_BIN"
 
-# Make `playit` available in the ttyd shell
+# Make `playit` available in ttyd shell
 ln -sf "$PLAYIT_CLI_BIN" /usr/local/bin/playit || true
 
-# Persist secrets/config across addon restarts (HA maps config:rw to /config)
+# Persist playit secret/config across addon/container restarts
 export XDG_CONFIG_HOME="/config"
 
-# Start playit agent detached so it survives ttyd shell exit
+# Start playit agent detached so ttyd shutdown doesn't terminate it
 nohup /addon/start_playit.sh >/var/log/playit-agent.log 2>&1 &
 
 sleep 1
 
-# Launch interactive shell in ttyd; ensure it also uses /config
-exec "$TTyD_BIN" -p "$TTY_PORT" -W -- /bin/sh -lc "export XDG_CONFIG_HOME=/config; trap '' HUP; exec /bin/sh"
+# Start ttyd shell (also ensure ttyd shell uses /config)
+exec "$TTyD_BIN" -p "$TTY_PORT" -W -- /bin/sh -lc "export XDG_CONFIG_HOME=/config; exec /bin/sh"
