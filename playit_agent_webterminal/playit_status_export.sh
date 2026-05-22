@@ -18,7 +18,6 @@ if [ -z "$HA_TOKEN" ]; then
 fi
 
 json_escape() {
-  # string -> JSON-escaped string (minimal)
   echo "$1" | sed 's/\\/\\\\/g; s/"/\\"/g; s/\r//g; s/\n/\\n/g'
 }
 

@@ -8,7 +8,7 @@ if [ ! -x "$PLAYIT_DAEMON_BIN" ]; then
   exit 1
 fi
 
-# Persist playit secret/config across addon/container restarts (HA maps config:rw to /config)
+# Persist playit secret/config across addon/container restarts (HA maps config:rw -> /config)
 export XDG_CONFIG_HOME="/config"
 
 echo "Starting playit agent (playitd)..."
