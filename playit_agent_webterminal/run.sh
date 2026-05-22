@@ -4,7 +4,7 @@ set -eu
 TTyD_BIN="/usr/local/bin/ttyd"
 TTY_PORT="7681"
 PLAYIT_BIN="/addon/playit-agent"
-PLAYIT_URL="https://github.com/playit-cloud/playit-agent/releases/download/v1.0.4/playit-cli-linux-amd64"
+PLAYIT_URL="https://github.com/playit-cloud/playit-agent/releases/download/v1.0.4/playit-linux-amd64"
 TTYD_URL="https://github.com/tsl0922/ttyd/releases/download/1.7.7/ttyd.x86_64"
 
 download_if_missing() {
