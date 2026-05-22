@@ -43,16 +43,19 @@ chmod_exec_if_file "$PLAYIT_DAEMON_BIN"
 download_if_missing "$PLAYIT_CLI_URL" "$PLAYIT_CLI_BIN"
 chmod_exec_if_file "$PLAYIT_CLI_BIN"
 
-# Make `playit` available in ttyd shell
+# Make `playit` available in the ttyd shell + for status exporter
 ln -sf "$PLAYIT_CLI_BIN" /usr/local/bin/playit || true
 
-# Persist playit secret/config across addon/container restarts
+# Persist config/secret across restarts
 export XDG_CONFIG_HOME="/config"
 
-# Start playit agent detached so ttyd shutdown doesn't terminate it
+# Start playit agent detached
 nohup /addon/start_playit.sh >/var/log/playit-agent.log 2>&1 &
+
+# Start status exporter detached (updates HA entities)
+nohup /addon/playit_status_export.sh >/var/log/playit-status-export.log 2>&1 &
 
 sleep 1
 
-# Start ttyd shell (also ensure ttyd shell uses /config)
-exec "$TTyD_BIN" -p "$TTY_PORT" -W -- /bin/sh -lc "export XDG_CONFIG_HOME=/config; exec /bin/sh"
+# Launch interactive shell in ttyd; keep it running even if client disconnects
+exec "$TTyD_BIN" -p "$TTY_PORT" -W -- /bin/sh -lc "export XDG_CONFIG_HOME=/config; trap '' HUP; exec /bin/sh"

@@ -1,12 +1,12 @@
 ﻿name: "Playit Agent WebTerminal"
 description: "Runs the Playit Agent and exposes a web terminal (ttyd) via Home Assistant ingress."
-version: "0.0.10-Beta"
+version: "0.0.11-Beta"
 slug: "playit_agent_webterminal"
 startup: "services"
 boot: "auto"
 host_network: false
-homeassistant_api: false
-hassio_api: false
+homeassistant_api: true
+hassio_api: true
 ingress: true
 ingress_port: 7681
 ingress_stream: true

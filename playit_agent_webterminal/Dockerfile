@@ -6,7 +6,9 @@ WORKDIR /addon
 
 COPY run.sh /addon/
 COPY start_playit.sh /addon/
-RUN chmod +x /addon/run.sh /addon/start_playit.sh
+COPY playit_status_export.sh /addon/
+
+RUN chmod +x /addon/run.sh /addon/start_playit.sh /addon/playit_status_export.sh
 
 EXPOSE 7681
 
