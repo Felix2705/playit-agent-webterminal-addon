@@ -46,10 +46,10 @@ chmod_exec_if_file "$PLAYIT_CLI_BIN"
 # Make `playit` available in the ttyd shell + for status exporter
 ln -sf "$PLAYIT_CLI_BIN" /usr/local/bin/playit || true
 
-# Persist config/secret across restarts
+# Persist playit secret/config across addon/container restarts (HA maps config:rw to /config)
 export XDG_CONFIG_HOME="/config"
 
-# Start playit agent detached
+# Start playit agent detached so ttyd/client exit doesn't kill it
 nohup /addon/start_playit.sh >/var/log/playit-agent.log 2>&1 &
 
 # Start status exporter detached (updates HA entities)
@@ -57,5 +57,5 @@ nohup /addon/playit_status_export.sh >/var/log/playit-status-export.log 2>&1 &
 
 sleep 1
 
-# Launch interactive shell in ttyd; keep it running even if client disconnects
+# Launch interactive shell in ttyd; keep it running even if the browser websocket closes
 exec "$TTyD_BIN" -p "$TTY_PORT" -W -- /bin/sh -lc "export XDG_CONFIG_HOME=/config; trap '' HUP; exec /bin/sh"

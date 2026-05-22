@@ -1,7 +1,10 @@
 #!/bin/sh
 set -eu
 
-# Exports Playit service status into Home Assistant entities via Supervisor Core API.
+# Periodically reads:
+#   /addon # playit service status
+# and publishes the parsed values as HA states using:
+#   http://supervisor/core/api/states/<entity_id>
 #
 # Entities:
 # - sensor.playit_agent_phase
@@ -18,12 +21,11 @@ if [ -z "$HA_TOKEN" ]; then
 fi
 
 json_escape() {
-  # Minimal JSON escaping for string values
   echo "$1" | sed 's/\\/\\\\/g; s/"/\\"/g; s/\r//g; s/\n/\\n/g'
 }
 
 post_state() {
-  # $1 = entity_id, $2 = state, $3 = attributes_json (object)
+  # $1=entity_id $2=state $3=attributes_json_object
   entity_id="$1"
   state="$2"
   attrs="$3"
@@ -40,7 +42,6 @@ post_state() {
 }
 
 normalize_bool() {
-  # $1 = string
   s="$(echo "$1" | tr '[:upper:]' '[:lower:]')"
   case "$s" in
     true|1|yes|on) echo "true" ;;
@@ -49,12 +50,12 @@ normalize_bool() {
   esac
 }
 
-extract_value_from_line() {
-  # $1 = multiline string, $2 = prefix regex like "^  Phase:"
-  # prints first matching group after ':' as plain value
+extract_value_after_colon() {
+  # $1=multi-line input $2=label like "Phase"
+  # prints first match after "Label:"
   s="$1"
-  prefix="$2"
-  echo "$s" | sed -n "s/${prefix}[[:space:]]*//p" | head -n 1
+  label="$2"
+  echo "$s" | sed -n "s/^[[:space:]]*$label:[[:space:]]*//p" | head -n 1
 }
 
 PLAYIT_BIN="/usr/local/bin/playit"
@@ -68,26 +69,22 @@ INTERVAL_SECONDS="${PLAYIT_STATUS_INTERVAL_SECONDS:-10}"
 while :; do
   status_out="$("$PLAYIT_BIN" service status 2>/dev/null || true)"
 
-  if [ -z "$status_out" ]; then
-    sleep "$INTERVAL_SECONDS"
-    continue
+  if [ -n "$status_out" ]; then
+    phase="$(extract_value_after_colon "$status_out" "Phase")"
+    version="$(extract_value_after_colon "$status_out" "Version")"
+    uptime_raw="$(extract_value_after_colon "$status_out" "Uptime")"
+    secret_raw="$(extract_value_after_colon "$status_out" "Secret configured")"
+
+    uptime_seconds="$(echo "$uptime_raw" | sed 's/^\([0-9][0-9]*\).*/\1/p')"
+    if [ -z "$uptime_seconds" ]; then uptime_seconds="0"; fi
+
+    secret_configured="$(normalize_bool "$secret_raw")"
+
+    post_state "sensor.playit_agent_phase" "$phase" "{}"
+    post_state "sensor.playit_agent_uptime_seconds" "$uptime_seconds" "{\"unit_of_measurement\":\"s\"}"
+    post_state "sensor.playit_agent_version" "$version" "{}"
+    post_state "sensor.playit_agent_secret_configured" "$secret_configured" "{}"
   fi
-
-  phase="$(extract_value_from_line "$status_out" '^[[:space:]]*Phase:')"
-  version="$(extract_value_from_line "$status_out" '^[[:space:]]*Version:')"
-  secret_configured_raw="$(extract_value_from_line "$status_out" '^[[:space:]]*Secret configured:')"
-  uptime_raw="$(extract_value_from_line "$status_out" '^[[:space:]]*Uptime:')"
-
-  # uptime line looks like: "Uptime: 5 seconds"
-  uptime_seconds="$(echo "$uptime_raw" | sed 's/^\([0-9][0-9]*\).*/\1/p')"
-  if [ -z "$uptime_seconds" ]; then uptime_seconds="0"; fi
-
-  secret_configured="$(normalize_bool "$secret_configured_raw")"
-
-  post_state "sensor.playit_agent_phase" "$phase" "{}"
-  post_state "sensor.playit_agent_uptime_seconds" "$uptime_seconds" "{}"
-  post_state "sensor.playit_agent_version" "$version" "{}"
-  post_state "sensor.playit_agent_secret_configured" "$secret_configured" "{}"
 
   sleep "$INTERVAL_SECONDS"
 done
