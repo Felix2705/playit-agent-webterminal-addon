@@ -3,8 +3,13 @@ set -eu
 
 TTyD_BIN="/usr/local/bin/ttyd"
 TTY_PORT="7681"
-PLAYIT_BIN="/addon/playit-agent"
-PLAYIT_URL="https://github.com/playit-cloud/playit-agent/releases/download/v1.0.4/playit-linux-amd64"
+
+PLAYIT_DAEMON_BIN="/addon/playit-agent"
+PLAYIT_DAEMON_URL="https://github.com/playit-cloud/playit-agent/releases/download/v1.0.4/playit-linux-amd64"
+
+PLAYIT_CLI_BIN="/addon/playit-cli"
+PLAYIT_CLI_URL="https://github.com/playit-cloud/playit-agent/releases/download/v1.0.4/playit-cli-linux-amd64"
+
 TTYD_URL="https://github.com/tsl0922/ttyd/releases/download/1.7.7/ttyd.x86_64"
 
 download_if_missing() {
@@ -25,17 +30,21 @@ chmod_exec_if_file() {
 
 # Ensure deps
 if ! command -v wget >/dev/null 2>&1; then
-  echo "wget not found"
+  echo "wget not found" >&2
   exit 1
 fi
 
 download_if_missing "$TTYD_URL" "$TTyD_BIN"
 chmod_exec_if_file "$TTyD_BIN"
 
-# Download Playit agent (amd64)
-download_if_missing "$PLAYIT_URL" "$PLAYIT_BIN"
-chmod_exec_if_file "$PLAYIT_BIN"
+download_if_missing "$PLAYIT_DAEMON_URL" "$PLAYIT_DAEMON_BIN"
+chmod_exec_if_file "$PLAYIT_DAEMON_BIN"
 
-# Expose an interactive shell in ttyd.
-# Auto-start Playit agent in the background, then keep the shell for user input.
+download_if_missing "$PLAYIT_CLI_URL" "$PLAYIT_CLI_BIN"
+chmod_exec_if_file "$PLAYIT_CLI_BIN"
+
+# Make `playit` available in the ttyd shell
+ln -sf "$PLAYIT_CLI_BIN" /usr/local/bin/playit || true
+
+# Start playit agent in background, then keep interactive shell
 exec "$TTyD_BIN" -p "$TTY_PORT" -W -- /bin/sh -lc "/addon/start_playit.sh & exec /bin/sh"
