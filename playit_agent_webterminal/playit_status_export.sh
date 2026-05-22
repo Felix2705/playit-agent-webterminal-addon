@@ -61,7 +61,7 @@ fi
 INTERVAL_SECONDS="${PLAYIT_STATUS_INTERVAL_SECONDS:-10}"
 
 while :; do
-  status_out="$("$PLAYIT_BIN" service status 2>/dev/null || true)"
+  status_out="$("$PLAYIT_BIN" status 2>/dev/null || true)"
 
   if [ -n "$status_out" ]; then
     phase="$(extract_after_colon "$status_out" "Phase")"
